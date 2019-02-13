@@ -112,18 +112,10 @@ class OpenTracing extends \CApplicationComponent
      */
     public function handleBeginRequestEvent(\CEvent $event)
     {
-        $spanOptions = [
-            'tags' => [
-                \OpenTracing\Tags\COMPONENT => str_replace('\\', '.', get_class($event->sender)),
-            ],
-        ];
-
-        // Mark application as child of another
-        if (($spanContext = $this->tracer->extract(Formats\HTTP_HEADERS, getallheaders())) !== null) {
-            $spanOptions['child_of'] = $spanContext;
-        }
-
-        $this->rootScope = $this->startActiveSpan('application', $spanOptions);
+        $this->rootScope = $this->startActiveSpan(
+            $this->operationNameFromBeginRequestEvent($event),
+            $this->spanOptionsFromBeginRequestEvent($event)
+        );
     }
 
     /**
@@ -169,4 +161,69 @@ class OpenTracing extends \CApplicationComponent
     }
 
     //endregion
+
+    /**
+     * @param \CEvent $event
+     * @return string
+     */
+    private function operationNameFromBeginRequestEvent(\CEvent $event)
+    {
+        /** @var \CApplication $application */
+        $application = $event->sender;
+
+        if ($application instanceof \CConsoleApplication) {
+            return implode(' ', $_SERVER['argv']);
+        }
+
+        if ($application instanceof \CWebApplication) {
+            try {
+                $requestUri = $application->request->getRequestUri();
+            } catch (\CException $exception) {
+                $requestUri = '';
+            }
+
+            return sprintf('%s %s', $application->request->getRequestType(), $requestUri);
+        }
+
+        return 'application';
+    }
+
+    /**
+     * @param \CEvent $event
+     * @return array
+     */
+    private function spanOptionsFromBeginRequestEvent(\CEvent $event)
+    {
+        /** @var \CApplication $application */
+        $application = $event->sender;
+
+        $options = [
+            'tags' => [
+                \OpenTracing\Tags\COMPONENT => get_class($application),
+            ],
+        ];
+
+        // Add HTTP related tags
+        if ($application instanceof \CWebApplication) {
+            try {
+                $requestUri = $application->request->getRequestUri();
+            } catch (\CException $exception) {
+                $requestUri = '';
+            }
+
+            $options['tags'][\OpenTracing\Tags\HTTP_METHOD] = $application->request->getRequestType();
+            $options['tags'][\OpenTracing\Tags\HTTP_URL] = sprintf(
+                '%s%s',
+                $application->request->getHostInfo(),
+                $requestUri
+            );
+        }
+
+        // Mark application as child of another
+        if (($spanContext = $this->tracer->extract(Formats\HTTP_HEADERS, getallheaders())) !== null) {
+            $options['child_of'] = $spanContext;
+        }
+
+        return $options;
+    }
 }
