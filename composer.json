@@ -1,0 +1,28 @@
+{
+    "name": "websupport/yii-opentracing",
+    "description": "OpenTracing component for Yii",
+    "type": "yii-extension",
+    "keywords": ["yii", "yii1", "opentracing", "jaeger", "profiling", "log"],
+    "license": "BSD-3-Clause",
+    "require": {
+        "php": ">=7.0",
+        "opentracing/opentracing": "^1.0.0@dev",
+        "ralouphie/getallheaders": "^2.0||^3.0",
+        "yiisoft/yii": "^1.1.18"
+    },
+    "require-dev": {
+        "jonahgeorge/jaeger-client-php": "dev-master",
+        "roave/security-advisories": "dev-master"
+    },
+    "conflict": {
+        "yiisoft/yii2": "*"
+    },
+    "suggest": {
+        "jonahgeorge/jaeger-client-php": "Required for reporting data to Jaeger"
+    },
+    "autoload": {
+        "psr-4": {
+            "Websupport\\OpenTracing\\": "src/"
+        }
+    }
+}
