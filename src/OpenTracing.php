@@ -2,6 +2,7 @@
 
 namespace Websupport\OpenTracing;
 
+use OpenTracing\Exceptions\UnsupportedFormat;
 use OpenTracing\Formats;
 use OpenTracing\GlobalTracer;
 use OpenTracing\Scope;
@@ -85,6 +86,18 @@ class OpenTracing extends \CApplicationComponent
         }
 
         return $this->tracer->startActiveSpan($operationName, $options);
+    }
+
+    /**
+     * @param string $format
+     * @param mixed $carrier
+     * @throws UnsupportedFormat
+     */
+    public function injectActiveSpan(string $format, &$carrier)
+    {
+        if (($span = $this->tracer->getActiveSpan()) !== null) {
+            $this->tracer->inject($span->getContext(), $format, $carrier);
+        }
     }
 
     /**
