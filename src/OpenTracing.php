@@ -6,6 +6,7 @@ use OpenTracing\Exceptions\UnsupportedFormat;
 use OpenTracing\Formats;
 use OpenTracing\GlobalTracer;
 use OpenTracing\Scope;
+use OpenTracing\Span;
 use OpenTracing\Tracer;
 use Yii;
 
@@ -13,6 +14,9 @@ class OpenTracing extends \CApplicationComponent
 {
     /** @var string */
     public $serviceName;
+
+    /** @var string sentry log route name */
+    public $sentry = 'sentry';
 
     /** @var Scope */
     private $rootScope;
@@ -147,6 +151,7 @@ class OpenTracing extends \CApplicationComponent
     {
         if (($span = $this->tracer->getActiveSpan()) !== null) {
             $span->setTag(\OpenTracing\Tags\ERROR, true);
+            $this->setSentryTag($span);
             $span->log([
                 'event' => 'error',
                 'error.kind' => 'Exception',
@@ -164,12 +169,20 @@ class OpenTracing extends \CApplicationComponent
     {
         if (($span = $this->tracer->getActiveSpan()) !== null) {
             $span->setTag(\OpenTracing\Tags\ERROR, true);
+            $this->setSentryTag($span);
             $span->log([
                 'event' => 'error',
                 'error.kind' => 'Error',
                 'message' => $event->message,
                 'stack' => sprintf('%s:%d', $event->file, $event->line),
             ]);
+        }
+    }
+
+    private function setSentryTag(Span $span)
+    {
+        if (Yii::app()->log->routes[$this->sentry]->eventId) {
+            $span->setTag(\OpenTracing\Tags\ERROR . '.sentry_id', Yii::app()->log->routes[$this->sentry]->eventId);
         }
     }
 
