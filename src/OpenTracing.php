@@ -181,8 +181,8 @@ class OpenTracing extends \CApplicationComponent
 
     private function setSentryTag(Span $span)
     {
-        if (Yii::app()->log->routes[$this->sentry]->eventId) {
-            $span->setTag(\OpenTracing\Tags\ERROR . '.sentry_id', Yii::app()->log->routes[$this->sentry]->eventId);
+        if (Yii::app()->hasComponent($this->sentry)) {
+            $span->setTag(\OpenTracing\Tags\ERROR . '.sentry_id', Yii::app()->{$this->sentry}->getLastEventId());
         }
     }
 
