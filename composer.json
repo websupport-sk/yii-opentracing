@@ -12,6 +12,7 @@
     },
     "require-dev": {
         "jonahgeorge/jaeger-client-php": "dev-master",
+        "phpunit/phpunit": "^6.5.14",
         "roave/security-advisories": "dev-master"
     },
     "conflict": {
@@ -23,6 +24,11 @@
     "autoload": {
         "psr-4": {
             "Websupport\\OpenTracing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Websupport\\OpenTracing\\Tests\\": "tests/"
         }
     }
 }
