@@ -14,4 +14,6 @@
 
     <!-- Include whole PSR-12 standard -->
     <rule ref="PSR12" />
+
+    <file>src/</file>
 </ruleset>
