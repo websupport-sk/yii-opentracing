@@ -105,8 +105,8 @@ class OpenTracing extends \CApplicationComponent
      */
     public function closeActiveSpan()
     {
-        if (($span = $this->tracer->getActiveSpan()) !== null) {
-            $span->finish();
+        if (($scope = $this->tracer->getScopeManager()->getActive()) !== null) {
+            $scope->close();
         }
     }
 
