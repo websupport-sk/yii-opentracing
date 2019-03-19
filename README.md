@@ -55,3 +55,24 @@ Jaeger client configuration
         ],
     ],
 ```
+
+### OpenTracing in `CActiveRecord`
+OpenTracing can be enabled in `CActiveRecord` using `behaviors`. 
+```php
+<?php
+
+use Websupport\OpenTracing\OpenTracingActiveRecordBehavior;
+
+class Model extends CActiveRecord
+{
+    public function behaviors()
+    {
+        return [
+            'OpenTracingActiveRecordBehavior' => [
+                'class' => OpenTracingActiveRecordBehavior::class,
+                'opentracingId' => 'opentracing' // string opentracing component name
+            ]
+        ];
+    }
+}
+```
