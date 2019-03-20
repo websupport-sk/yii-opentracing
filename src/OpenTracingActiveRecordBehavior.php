@@ -137,7 +137,6 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
 
         $this->activeScope = \Yii::app()->getComponent($this->opentracingId)
             ->startActiveSpan($this->spanName('FIND'), $this->spanOptionsFromActiveRecordClass());
-        $this->activeScope = null;
     }
 
     /**
