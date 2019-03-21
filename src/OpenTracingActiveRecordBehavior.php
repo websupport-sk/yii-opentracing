@@ -5,6 +5,7 @@ namespace Websupport\OpenTracing;
 use CEvent;
 use CModelEvent;
 use OpenTracing\Scope;
+use Yii;
 
 /**
  * Class OpenTracingActiveRecordBehavior
@@ -21,6 +22,8 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
      * Whether we should hook to before and after find methods.
      * Be careful with this option. There is option, where you can disable calling afterFind method
      * directly in the code.
+     * Also, in case, you are retrieving multiple ActiveRecords, beforeFind is called just once, but afterFind is called
+     * for every found record.
      * @var bool
      */
     public $traceFind = false;
@@ -37,14 +40,17 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
      */
     public $traceDelete = true;
 
-    /** @var ?Scope */
-    private $activeScope;
+    /**
+     * Associative array of active scopes [classname => scope]
+     * @var Scope[]
+     */
+    private static $activeScopes;
 
     public function attach($owner)
     {
         parent::attach($owner);
 
-        if (!\Yii::app()->hasComponent($this->opentracingId)) {
+        if (!Yii::app()->hasComponent($this->opentracingId)) {
             $this->setEnabled(false);
         }
     }
@@ -63,13 +69,11 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
             return;
         }
 
-        $this->activeScope = \Yii::app()->getComponent($this->opentracingId)->startActiveSpan(
+        $this->startActiveScope(
             $this->spanName($this->getOwner()->getIsNewRecord() ? 'INSERT' : 'UPDATE'),
-            $this->spanOptionsFromActiveRecordClass()
+            $this->spanTagsFromActiveRecord(),
+            ['attributes' => $this->getOwner()->getAttributes()]
         );
-        $this->activeScope->getSpan()->log([
-            'attributes' => $this->getOwner()->getAttributes()
-        ]);
     }
 
     /**
@@ -80,12 +84,11 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
      */
     public function afterSave($event)
     {
-        if (!$this->traceSave && $this->activeScope) {
+        if (!$this->traceSave) {
             return;
         }
-        $this->activeScope->getSpan()->setTag('db.active_record.primary_key', $this->getPrimaryKeyValue());
-        $this->activeScope->close();
-        $this->activeScope = null;
+
+        $this->closeActiveScope(['db.active_record.primary_key' => $this->getPrimaryKeyValue()]);
     }
 
     /**
@@ -101,11 +104,13 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
             return;
         }
 
-        $options = $this->spanOptionsFromActiveRecordClass();
-        $options['tags']['db.active_record.primary_key'] = $this->getPrimaryKeyValue();
-
-        $this->activeScope = \Yii::app()->getComponent($this->opentracingId)
-            ->startActiveSpan($this->spanName('DELETE'), $options);
+        $this->startActiveScope(
+            $this->spanName('DELETE'),
+            array_merge(
+                $this->spanTagsFromActiveRecord(),
+                ['db.active_record.primary_key' => $this->getPrimaryKeyValue()]
+            )
+        );
     }
 
     /**
@@ -119,8 +124,8 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
         if (!$this->traceDelete) {
             return;
         }
-        $this->activeScope->close();
-        $this->activeScope = null;
+
+        $this->closeActiveScope();
     }
 
     /**
@@ -135,8 +140,7 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
             return;
         }
 
-        $this->activeScope = \Yii::app()->getComponent($this->opentracingId)
-            ->startActiveSpan($this->spanName('FIND'), $this->spanOptionsFromActiveRecordClass());
+        $this->startActiveScope($this->spanName('FIND'), $this->spanTagsFromActiveRecord());
     }
 
     /**
@@ -151,25 +155,65 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
             return;
         }
 
-        $this->activeScope->getSpan()->log(['criteria' => $this->getOwner()->getDbCriteria()->toArray()]);
-        $this->activeScope->close();
-        $this->activeScope = null;
+        $this->closeActiveScope([], ['criteria' => $this->getOwner()->getDbCriteria()->toArray()]);
     }
 
-    private function spanName($action)
+    private function startActiveScope(string $operationName, array $tags = [], array $log = [])
+    {
+        $className = get_class($this->getOwner());
+        if (isset(self::$activeScopes[$className])) {
+            $logMessage = sprintf('Active span for class %s found, closing it!', $className);
+            $this->closeActiveScope([], ['event' => 'error', 'message' => $logMessage]);
+            Yii::log($logMessage, \CLogger::LEVEL_WARNING, 'opentracing');
+        }
+
+        $scope = Yii::app()->getComponent($this->opentracingId)->startActiveSpan($operationName, [
+            'tags' => $tags,
+        ]);
+
+        if (!empty($log)) {
+            $scope->getSpan()->log($log);
+        }
+
+        self::$activeScopes[$className] = $scope;
+    }
+
+    private function closeActiveScope(array $tags = [], array $log = [])
+    {
+        $className = get_class($this->getOwner());
+        if (!isset(self::$activeScopes[$className])) {
+            return;
+        }
+
+        $scope = self::$activeScopes[$className];
+        foreach ($tags as $key => $value) {
+            $scope->getSpan()->setTag($key, $value);
+        }
+
+        if (!empty($log)) {
+            $scope->getSpan()->log($log);
+        }
+
+        $scope->close();
+
+        unset(self::$activeScopes[$className]);
+    }
+
+    private function spanName(string $action)
     {
         return sprintf('db.active_record.%s', strtolower($action));
     }
 
-    private function spanOptionsFromActiveRecordClass()
+    /**
+     * @return array
+     */
+    private function spanTagsFromActiveRecord()
     {
         return [
-            'tags' => [
-                \OpenTracing\Tags\COMPONENT => 'yii-opentracing.activerecord',
-                \OpenTracing\Tags\DATABASE_TYPE => $this > $this->getDatabaseType(),
-                \OpenTracing\Tags\DATABASE_USER => $this->getOwner()->getDbConnection()->username,
-                'db.active_record.class' => get_class($this->getOwner())
-            ]
+            \OpenTracing\Tags\COMPONENT => 'yii-opentracing.activerecord',
+            \OpenTracing\Tags\DATABASE_TYPE => $this->getDatabaseType(),
+            \OpenTracing\Tags\DATABASE_USER => $this->getOwner()->getDbConnection()->username,
+            'db.active_record.class' => get_class($this->getOwner()),
         ];
     }
 
