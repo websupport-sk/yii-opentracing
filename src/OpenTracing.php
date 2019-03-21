@@ -5,6 +5,7 @@ namespace Websupport\OpenTracing;
 use OpenTracing\Exceptions\UnsupportedFormat;
 use OpenTracing\Formats;
 use OpenTracing\GlobalTracer;
+use OpenTracing\NoopTracer;
 use OpenTracing\Scope;
 use OpenTracing\Tracer;
 use Yii;
@@ -40,7 +41,7 @@ class OpenTracing extends \CApplicationComponent
      */
     protected function initTracer()
     {
-        $this->tracer = GlobalTracer::get();
+        $this->setTracer(NoopTracer::create());
     }
 
     /**
