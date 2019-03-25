@@ -1,6 +1,6 @@
-![Code Climate coverage](https://img.shields.io/codeclimate/coverage/websupport-sk/yii-opentracing.svg)
-![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/websupport-sk/yii-opentracing.svg)
-![Travis](https://img.shields.io/travis/com/websupport-sk/yii-opentracing.svg)
+[![Code Climate coverage](https://img.shields.io/codeclimate/coverage/websupport-sk/yii-opentracing.svg)](https://codeclimate.com/github/websupport-sk/yii-opentracing)
+[![Code Climate maintainability](https://img.shields.io/codeclimate/maintainability/websupport-sk/yii-opentracing.svg)](https://codeclimate.com/github/websupport-sk/yii-opentracing)
+[![Travis](https://img.shields.io/travis/com/websupport-sk/yii-opentracing.svg)](https://travis-ci.com/websupport-sk/yii-opentracing)
 
 # Yii OpenTracing extension
 
