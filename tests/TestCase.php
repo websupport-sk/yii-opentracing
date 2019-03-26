@@ -8,21 +8,41 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
     protected function tearDown()
     {
-        parent::tearDown();
         $this->destroyApplication();
+
+        parent::tearDown();
     }
 
     /**
      * @param array $config
-     * @param string $appClass
      * @return \CApplication
      */
-    protected function mockApplication($config = [], $appClass = \CWebApplication::class)
+    protected function createApplication(array $config = [])
     {
-        return Yii::createApplication($appClass, \CMap::mergeArray([
+        return Yii::createApplication(\CWebApplication::class, \CMap::mergeArray([
             'id' => 'testapp',
             'basePath' => __DIR__,
+            'components' => [],
         ], $config));
+    }
+
+    /**
+     * @param string $class
+     * @param array $config
+     * @return \CApplicationComponent
+     */
+    protected function createApplicationComponent($class, array $config = [])
+    {
+        if (Yii::app() === null) {
+            $this->createApplication();
+        }
+
+        $component = Yii::createComponent(\CMap::mergeArray([
+            'class' => $class,
+        ], $config));
+        $component->init();
+
+        return $component;
     }
 
     protected function destroyApplication()
