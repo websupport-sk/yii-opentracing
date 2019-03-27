@@ -44,7 +44,7 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
      * Associative array of active scopes [classname => scope]
      * @var Scope[]
      */
-    private static $activeScopes;
+    private static $activeScopes = [];
 
     public function attach($owner)
     {
