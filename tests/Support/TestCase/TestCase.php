@@ -1,6 +1,6 @@
 <?php
 
-namespace Websupport\OpenTracing\Tests;
+namespace Websupport\OpenTracing\Tests\Support\TestCase;
 
 use Yii;
 

@@ -4,6 +4,7 @@ namespace Websupport\OpenTracing\Tests;
 
 use OpenTracing\NoopTracer;
 use Websupport\OpenTracing\OpenTracing;
+use Websupport\OpenTracing\Tests\Support\TestCase\TestCase;
 
 class OpenTracingTest extends TestCase
 {

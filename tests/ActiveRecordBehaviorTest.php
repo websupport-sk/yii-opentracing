@@ -5,29 +5,11 @@ namespace Websupport\OpenTracing\Tests;
 use PHPUnit\Framework\MockObject\MockObject;
 use Websupport\OpenTracing\OpenTracing;
 use Websupport\OpenTracing\OpenTracingActiveRecordBehavior;
-use Yii;
+use Websupport\OpenTracing\Tests\Support\ActiveRecord\MockableBehaviorActiveRecord;
+use Websupport\OpenTracing\Tests\Support\TestCase\DatabaseIntegrationTestCase;
 
-class ActiveRecordBehaviorTest extends TestCase
+class ActiveRecordBehaviorTest extends DatabaseIntegrationTestCase
 {
-    public function testBehaviorEnabledWithOpentracingComponent()
-    {
-        $activeRecord = new TestActiveRecord();
-        $activeRecord->attachBehavior('opentracing', OpenTracingActiveRecordBehavior::class);
-
-        $this->assertTrue($activeRecord->asa('opentracing')->getEnabled());
-    }
-
-    public function testBehaviorDisabledWithoutOpentracingComponent()
-    {
-        $this->destroyApplication();
-        $this->createApplication();
-
-        $activeRecord = new TestActiveRecord();
-        $activeRecord->attachBehavior('opentracing', OpenTracingActiveRecordBehavior::class);
-
-        $this->assertFalse($activeRecord->asa('opentracing')->getEnabled());
-    }
-
     public function testTraceFind()
     {
         $behaviorMock = $this->mockBehavior(['beforeFind', 'afterFind']);
@@ -35,7 +17,7 @@ class ActiveRecordBehaviorTest extends TestCase
         $behaviorMock->expects($this->once())->method('afterFind');
 
         // use anonymous class to bust private ::model() cache
-        $activeRecordClass = new class extends TestActiveRecord {
+        $activeRecordClass = new class extends MockableBehaviorActiveRecord {
         };
         $activeRecordClass::$behaviors = [
             $behaviorMock,
@@ -51,7 +33,7 @@ class ActiveRecordBehaviorTest extends TestCase
         $behaviorMock->expects($this->atLeast(2))->method('afterFind');
 
         // use anonymous class to bust private ::model() cache
-        $activeRecordClass = new class extends TestActiveRecord {
+        $activeRecordClass = new class extends MockableBehaviorActiveRecord {
         };
         $activeRecordClass::$behaviors = [
             $behaviorMock,
@@ -66,11 +48,11 @@ class ActiveRecordBehaviorTest extends TestCase
         $behaviorMock->expects($this->once())->method('beforeSave');
         $behaviorMock->expects($this->once())->method('afterSave');
 
-        TestActiveRecord::$behaviors = [
+        MockableBehaviorActiveRecord::$behaviors = [
             $behaviorMock,
         ];
 
-        $activeRecord = new TestActiveRecord();
+        $activeRecord = new MockableBehaviorActiveRecord();
         $activeRecord->id = 100;
         $activeRecord->save();
     }
@@ -82,7 +64,7 @@ class ActiveRecordBehaviorTest extends TestCase
         $behaviorMock->expects($this->once())->method('afterDelete');
 
         // use anonymous class to bust private ::model() cache
-        $activeRecordClass = new class extends TestActiveRecord {
+        $activeRecordClass = new class extends MockableBehaviorActiveRecord {
         };
         $activeRecordClass::$behaviors = [
             $behaviorMock,
@@ -96,10 +78,6 @@ class ActiveRecordBehaviorTest extends TestCase
     {
         parent::setUp();
 
-        $sourceDb = sprintf('%s/resources/fixtures.sqlite', Yii::getPathOfAlias('tests'));
-        $runtimeDb = sprintf('%s/runtime/db.sqlite', Yii::getPathOfAlias('tests'));
-        copy($sourceDb, $runtimeDb);
-
         $this->createApplication([
             'components' => [
                 'opentracing' => [
@@ -107,17 +85,6 @@ class ActiveRecordBehaviorTest extends TestCase
                 ],
             ],
         ]);
-    }
-
-    protected function createApplication(array $config = [])
-    {
-        return parent::createApplication(\CMap::mergeArray([
-            'components' => [
-                'db' => [
-                    'connectionString' => sprintf('sqlite:%s/runtime/db.sqlite', Yii::getPathOfAlias('tests')),
-                ],
-            ],
-        ], $config));
     }
 
     /**

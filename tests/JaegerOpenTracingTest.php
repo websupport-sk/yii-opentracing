@@ -4,6 +4,7 @@ namespace Websupport\OpenTracing\Tests;
 
 use Jaeger\Tracer;
 use Websupport\OpenTracing\JaegerOpenTracing;
+use Websupport\OpenTracing\Tests\Support\TestCase\TestCase;
 
 class JaegerOpenTracingTest extends TestCase
 {

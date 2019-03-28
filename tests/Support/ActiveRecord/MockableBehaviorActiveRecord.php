@@ -1,11 +1,11 @@
 <?php
 
-namespace Websupport\OpenTracing\Tests;
+namespace Websupport\OpenTracing\Tests\Support\ActiveRecord;
 
 /**
  * @property int $id
  */
-class TestActiveRecord extends \CActiveRecord
+class MockableBehaviorActiveRecord extends \CActiveRecord
 {
     /**
      * Static public array of behaviors to enable setting mocked behavior before running constructor
@@ -26,6 +26,6 @@ class TestActiveRecord extends \CActiveRecord
 
     public function tableName()
     {
-        return 'TestActiveRecord';
+        return 'test_table';
     }
 }
