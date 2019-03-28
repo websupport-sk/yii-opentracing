@@ -10,8 +10,6 @@ use Yii;
 /**
  * Class OpenTracingActiveRecordBehavior
  * @package Websupport\OpenTracing
- *
- * @method \CActiveRecord getOwner()
  */
 class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
 {
@@ -70,9 +68,9 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
         }
 
         $this->startActiveScope(
-            $this->spanName($this->getOwner()->getIsNewRecord() ? 'INSERT' : 'UPDATE'),
+            $this->spanName($this->owner->isNewRecord ? 'INSERT' : 'UPDATE'),
             $this->spanTagsFromActiveRecord(),
-            ['attributes' => $this->getOwner()->getAttributes()]
+            ['attributes' => $this->owner->attributes]
         );
     }
 
@@ -155,12 +153,12 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
             return;
         }
 
-        $this->closeActiveScope([], ['criteria' => $this->getOwner()->getDbCriteria()->toArray()]);
+        $this->closeActiveScope([], ['criteria' => $this->owner->dbCriteria->toArray()]);
     }
 
     private function startActiveScope(string $operationName, array $tags = [], array $log = [])
     {
-        $className = get_class($this->getOwner());
+        $className = get_class($this->owner);
         if (isset(self::$activeScopes[$className])) {
             $logMessage = sprintf('Active span for class %s found, closing it!', $className);
             $this->closeActiveScope([], ['event' => 'error', 'message' => $logMessage]);
@@ -180,7 +178,7 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
 
     private function closeActiveScope(array $tags = [], array $log = [])
     {
-        $className = get_class($this->getOwner());
+        $className = get_class($this->owner);
         if (!isset(self::$activeScopes[$className])) {
             return;
         }
@@ -212,15 +210,15 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
         return [
             \OpenTracing\Tags\COMPONENT => 'yii-opentracing.activerecord',
             \OpenTracing\Tags\DATABASE_TYPE => $this->getDatabaseType(),
-            \OpenTracing\Tags\DATABASE_USER => $this->getOwner()->getDbConnection()->username,
-            'db.active_record.class' => get_class($this->getOwner()),
+            \OpenTracing\Tags\DATABASE_USER => $this->owner->dbConnection->username,
+            'db.active_record.class' => get_class($this->owner),
         ];
     }
 
     private function getDatabaseType()
     {
-        $dbConnection = $this->getOwner()->getDbConnection();
-        if (isset($dbConnection->driverMap[$dbConnection->getDriverName()])) {
+        $dbConnection = $this->owner->dbConnection;
+        if (isset($dbConnection->driverMap[$dbConnection->driverName])) {
             return 'sql';
         }
         return '';
@@ -228,6 +226,6 @@ class OpenTracingActiveRecordBehavior extends \CActiveRecordBehavior
 
     private function getPrimaryKeyValue()
     {
-        return implode(',', (array) $this->getOwner()->getPrimaryKey());
+        return implode(',', (array) $this->owner->primaryKey);
     }
 }
