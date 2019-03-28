@@ -90,6 +90,18 @@ class ActiveRecordBehaviorIntegrationTest extends DatabaseIntegrationTestCase
         $activeRecord->save();
     }
 
+    public function testTraceSaveDisabled()
+    {
+        $opentracingMock = $this->createApplicationWithMockedOpentracingComponent();
+        $opentracingMock->expects($this->never())->method('startActiveSpan');
+
+        $activeRecord = new TestActiveRecord();
+        $activeRecord->opentracingBehavior->traceSave = false;
+        $activeRecord->id = 100;
+        $activeRecord->save();
+        $activeRecord->opentracingBehavior->traceSave = true;
+    }
+
     public function testTraceDelete()
     {
         $findScopeMock = $this->mockScope();
@@ -110,6 +122,23 @@ class ActiveRecordBehaviorIntegrationTest extends DatabaseIntegrationTestCase
 
         $activeRecord = TestActiveRecord::model()->findByPk(1);
         $activeRecord->delete();
+    }
+
+    public function testTraceDeleteDisabled()
+    {
+        $opentracingMock = $this->createApplicationWithMockedOpentracingComponent();
+        $opentracingMock->expects($this->never())
+            ->method('startActiveSpan')
+            ->with($this->stringContains('DELETE'));
+
+        TestActiveRecord::model()->opentracingBehavior->traceFind = false;
+
+        $activeRecord = TestActiveRecord::model()->findByPk(1);
+        $activeRecord->opentracingBehavior->traceDelete = false;
+        $activeRecord->delete();
+        $activeRecord->opentracingBehavior->traceDelete = true;
+
+        TestActiveRecord::model()->opentracingBehavior->traceFind = true;
     }
 
     /**
