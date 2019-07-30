@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<ruleset>
+    <!-- Don't fail CI on warnings -->
+    <config name="ignore_warnings_on_exit" value="1" />
+
+    <!--
+        - Use colors in output
+        - Check only .php files
+        - Show progress of the run
+    -->
+    <arg name="colors" />
+    <arg name="extensions" value="php" />
+    <arg value="p" />
+
+    <!-- Include whole PSR-12 standard -->
+    <rule ref="PSR12" />
+
+    <file>src/</file>
+</ruleset>

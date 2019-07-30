@@ -5,6 +5,7 @@ namespace Websupport\OpenTracing;
 use OpenTracing\Exceptions\UnsupportedFormat;
 use OpenTracing\Formats;
 use OpenTracing\GlobalTracer;
+use OpenTracing\NoopTracer;
 use OpenTracing\Scope;
 use OpenTracing\Span;
 use OpenTracing\Tracer;
@@ -44,7 +45,7 @@ class OpenTracing extends \CApplicationComponent
      */
     protected function initTracer()
     {
-        $this->tracer = GlobalTracer::get();
+        $this->setTracer(NoopTracer::create());
     }
 
     /**
@@ -109,8 +110,8 @@ class OpenTracing extends \CApplicationComponent
      */
     public function closeActiveSpan()
     {
-        if (($span = $this->tracer->getActiveSpan()) !== null) {
-            $span->finish();
+        if (($scope = $this->tracer->getScopeManager()->getActive()) !== null) {
+            $scope->close();
         }
     }
 
