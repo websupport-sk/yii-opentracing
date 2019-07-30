@@ -190,7 +190,7 @@ class OpenTracing extends \CApplicationComponent
         }
 
         if ($application instanceof \CWebApplication) {
-            return sprintf('application.%s', $application->request->getRequestType());
+            return sprintf('application.%s', strtolower($application->request->getRequestType()));
         }
 
         return 'application';
