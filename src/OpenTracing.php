@@ -16,8 +16,8 @@ class OpenTracing extends \CApplicationComponent
     /** @var string */
     public $serviceName;
 
-    /** @var string sentry log route name */
-    public $sentry = 'sentry';
+    /** @var string sentry component name */
+    public $sentry;
 
     /** @var Scope */
     private $rootScope;
@@ -182,7 +182,7 @@ class OpenTracing extends \CApplicationComponent
 
     private function setSentryTag(Span $span)
     {
-        if (Yii::app()->hasComponent($this->sentry)) {
+        if ($this->sentry && Yii::app()->hasComponent($this->sentry)) {
             $span->setTag(\OpenTracing\Tags\ERROR . '.sentry_id', Yii::app()->{$this->sentry}->getLastEventId());
         }
     }

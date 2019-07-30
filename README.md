@@ -76,3 +76,23 @@ class Model extends CActiveRecord
     }
 }
 ```
+
+### Sentry integration
+If you are using [Sentry](https://sentry.io) to track errors and want to store Sentry Event ID within current trace, 
+you can achieve this in conjunction with [websupport/yii-sentry](https://github.com/websupport-sk/yii-sentry) component.
+
+After installing and configuring this component, each trace, where any error occurred will have its `error.sentry_id` tag filled with Sentry Event ID.
+
+```php
+    'components' => [
+        'opentracing' => [
+            'class' => \Websupport\OpenTracing\JaegerOpenTracing::class,
+            'sentry' => 'sentry' // or name of your yii-sentry component
+            ...
+        ],
+        'sentry' => [ // yii-sentry component
+            'class' => \Websupport\YiiSentry\Client::class
+            ...
+        ]
+    ],
+```
