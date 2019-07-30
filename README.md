@@ -87,7 +87,7 @@ After installing and configuring this component, each trace, where any error occ
     'components' => [
         'opentracing' => [
             'class' => \Websupport\OpenTracing\JaegerOpenTracing::class,
-            'sentry' => 'sentry' // or name of your yii-sentry component
+            'sentryId' => 'sentry' // or name of your yii-sentry component
             ...
         ],
         'sentry' => [ // yii-sentry component
