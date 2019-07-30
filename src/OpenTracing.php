@@ -203,13 +203,7 @@ class OpenTracing extends \CApplicationComponent
         }
 
         if ($application instanceof \CWebApplication) {
-            try {
-                $requestUri = $application->request->getRequestUri();
-            } catch (\CException $exception) {
-                $requestUri = '';
-            }
-
-            return sprintf('%s %s', $application->request->getRequestType(), $requestUri);
+            return sprintf('application.%s', strtolower($application->request->getRequestType()));
         }
 
         return 'application';
@@ -244,6 +238,8 @@ class OpenTracing extends \CApplicationComponent
                 $application->request->getHostInfo(),
                 $requestUri
             );
+            $options['tags']['http.host'] = parse_url($application->request->getUrl(), PHP_URL_HOST);
+            $options['tags']['http.uri'] = $requestUri;
         }
 
         // Mark application as child of another
