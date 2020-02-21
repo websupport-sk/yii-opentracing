@@ -19,6 +19,9 @@ class OpenTracing extends \CApplicationComponent
     /** @var string id of sentry component */
     public $sentryId;
 
+    /** @var bool if root node should be closed on end request */
+    public $closeRootNode = true;
+
     /** @var Scope */
     private $rootScope;
 
@@ -141,7 +144,9 @@ class OpenTracing extends \CApplicationComponent
      */
     public function handleEndRequestEvent(\CEvent $event)
     {
-        $this->rootScope->close();
+        if ($this->closeRootNode) {
+            $this->rootScope->close();
+        }
         $this->tracer->flush();
     }
 
