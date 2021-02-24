@@ -74,7 +74,7 @@ class ActiveRecordBehaviorTest extends DatabaseIntegrationTestCase
         $activeRecord->delete();
     }
 
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
 
