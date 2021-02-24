@@ -2,13 +2,13 @@
 
 namespace Websupport\OpenTracing;
 
-use OpenTracing\Exceptions\UnsupportedFormat;
 use OpenTracing\Formats;
 use OpenTracing\GlobalTracer;
 use OpenTracing\NoopTracer;
 use OpenTracing\Scope;
 use OpenTracing\Span;
 use OpenTracing\Tracer;
+use OpenTracing\UnsupportedFormatException;
 use Yii;
 
 class OpenTracing extends \CApplicationComponent
@@ -48,7 +48,7 @@ class OpenTracing extends \CApplicationComponent
      */
     protected function initTracer()
     {
-        $this->setTracer(NoopTracer::create());
+        $this->setTracer(new NoopTracer());
     }
 
     /**
@@ -72,6 +72,7 @@ class OpenTracing extends \CApplicationComponent
 
     /**
      * @param Tracer $tracer
+     *
      * @return $this
      */
     public function setTracer(Tracer $tracer)
@@ -85,6 +86,7 @@ class OpenTracing extends \CApplicationComponent
     /**
      * @param string $operationName
      * @param array $options
+     *
      * @return Scope
      */
     public function startActiveSpan(string $operationName, array $options = [])
@@ -99,7 +101,8 @@ class OpenTracing extends \CApplicationComponent
     /**
      * @param string $format
      * @param mixed $carrier
-     * @throws UnsupportedFormat
+     *
+     * @throws UnsupportedFormatException
      */
     public function injectActiveSpan(string $format, &$carrier)
     {
@@ -196,6 +199,7 @@ class OpenTracing extends \CApplicationComponent
 
     /**
      * @param \CEvent $event
+     *
      * @return string
      */
     private function operationNameFromBeginRequestEvent(\CEvent $event)
@@ -216,6 +220,7 @@ class OpenTracing extends \CApplicationComponent
 
     /**
      * @param \CEvent $event
+     *
      * @return array
      */
     private function spanOptionsFromBeginRequestEvent(\CEvent $event)
