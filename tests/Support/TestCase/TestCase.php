@@ -6,7 +6,7 @@ use Yii;
 
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
-    protected function tearDown()
+    protected function tearDown(): void
     {
         $this->destroyApplication();
 
